@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador Financeiro Pessoal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .progress-bar {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e0e0e0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        .box-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .floating-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-800 mb-2">Meu Organizador Financeiro</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">Gerencie suas finanças de forma inteligente com essas três caixas de investimento</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Caixa Principal -->
+            <div class="bg-white rounded-xl p-6 box-shadow border-l-4 border-indigo-500">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800">Caixa Principal</h2>
+                        <p class="text-sm text-gray-500">Sem meta definida</p>
+                    </div>
+                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">115% CDI</span>
+                    <button onclick="editCDI('main')" class="text-indigo-600 hover:text-indigo-800 ml-1">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-3xl font-bold text-gray-800">R$ <span id="main-amount">0.00</span></p>
+                    <p class="text-sm text-gray-500">Rendimento acumulado: R$ <span id="main-earnings">0.00</span></p>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex space-x-2">
+                        <input type="number" id="main-input" placeholder="Valor" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                        <button onclick="openDatePicker('main')" class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 transition">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
+                    </div>
+                    <div id="main-date-picker" class="hidden">
+                        <input type="date" id="main-date" class="w-full px-3 py-2 border border-gray-300 rounded-md mt-1">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="addToMain()" class="bg-indigo-600 text-white px-2 py-1 text-sm rounded-md hover:bg-indigo-700 transition">Adicionar</button>
+                        <button onclick="withdrawFromMain()" class="bg-red-600 text-white px-2 py-1 text-sm rounded-md hover:bg-red-700 transition">Retirar</button>
+                        <button onclick="openEditModal('main')" class="bg-gray-600 text-white px-2 py-1 text-sm rounded-md hover:bg-gray-700 transition">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-sm text-gray-600">
+                    <p>Taxa CDI atual: <span id="current-cdi">13.25</span>% a.a.</p>
+                    <p>Seu rendimento: <span id="main-rate">15.24</span>% a.a.</p>
+                </div>
+            </div>
+            
+            <!-- Caixa do Carro -->
+            <div class="bg-white rounded-xl p-6 box-shadow border-l-4 border-blue-500">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800">Caixa do Carro</h2>
+                        <p class="text-sm text-gray-500">Meta: R$ 30.000,00</p>
+                    </div>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">100% CDI</span>
+                    <button onclick="editCDI('car')" class="text-blue-600 hover:text-blue-800 ml-1">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-3xl font-bold text-gray-800">R$ <span id="car-amount">0.00</span></p>
+                    <p class="text-sm text-gray-500">Rendimento acumulado: R$ <span id="car-earnings">0.00</span></p>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Progresso</span>
+                        <span><span id="car-percentage">0</span>%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="car-progress" class="progress-fill bg-blue-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex space-x-2">
+                        <input type="number" id="car-input" placeholder="Valor (padrão: 1200)" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200">
+                        <button onclick="openDatePicker('car')" class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 transition">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
+                    </div>
+                    <div id="car-date-picker" class="hidden">
+                        <input type="date" id="car-date" class="w-full px-3 py-2 border border-gray-300 rounded-md mt-1">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="addToCar()" class="bg-blue-600 text-white px-2 py-1 text-sm rounded-md hover:bg-blue-700 transition">Investir</button>
+                        <button onclick="withdrawFromCar()" class="bg-red-600 text-white px-2 py-1 text-sm rounded-md hover:bg-red-700 transition">Retirar</button>
+                        <button onclick="openEditModal('car')" class="bg-gray-600 text-white px-2 py-1 text-sm rounded-md hover:bg-gray-700 transition">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-sm">
+                    <p class="text-gray-600">Taxa CDI atual: <span id="car-cdi">13.25</span>% a.a.</p>
+                    <p class="font-medium">Tempo estimado: <span id="car-time">0 meses</span></p>
+                </div>
+            </div>
+            
+            <!-- Caixa do Cartão -->
+            <div class="bg-white rounded-xl p-6 box-shadow border-l-4 border-green-500">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800">Caixa do Cartão</h2>
+                        <p class="text-sm text-gray-500">Sem meta definida</p>
+                    </div>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">100% CDI</span>
+                    <button onclick="editCDI('card')" class="text-green-600 hover:text-green-800 ml-1">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-3xl font-bold text-gray-800">R$ <span id="card-amount">0.00</span></p>
+                    <p class="text-sm text-gray-500">Rendimento acumulado: R$ <span id="card-earnings">0.00</span></p>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex space-x-2">
+                        <input type="number" id="card-input" placeholder="Valor" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-200">
+                        <button onclick="openDatePicker('card')" class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 transition">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
+                    </div>
+                    <div id="card-date-picker" class="hidden">
+                        <input type="date" id="card-date" class="w-full px-3 py-2 border border-gray-300 rounded-md mt-1">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="addToCard()" class="bg-green-600 text-white px-2 py-1 text-sm rounded-md hover:bg-green-700 transition">Adicionar</button>
+                        <button onclick="withdrawFromCard()" class="bg-red-600 text-white px-2 py-1 text-sm rounded-md hover:bg-red-700 transition">Retirar</button>
+                        <button onclick="openEditModal('card')" class="bg-gray-600 text-white px-2 py-1 text-sm rounded-md hover:bg-gray-700 transition">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-sm text-gray-600">
+                    <p>Taxa CDI atual: <span id="card-cdi">13.25</span>% a.a.</p>
+                    <p>Seu rendimento: <span id="card-rate">13.25</span>% a.a.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resumo e Histórico -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl p-6 box-shadow">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Resumo Mensal</h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Investimento mensal (carro):</span>
+                        <span class="font-medium">R$ <span id="monthly-investment">0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total investido:</span>
+                        <span class="font-medium">R$ <span id="total-invested">0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total em juros:</span>
+                        <span class="font-medium">R$ <span id="total-earnings">0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Patrimônio total:</span>
+                        <span class="font-medium text-indigo-600">R$ <span id="total-amount">0.00</span></span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Botão flutuante para simular mês -->
+    <button id="simulate-btn" onclick="simulateMonth()" class="floating-btn bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition transform hover:scale-110">
+        <i class="fas fa-calendar-plus text-xl"></i>
+    </button>
+    
+    <!-- Modal de edição manual -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Definir Valor Exato</h2>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+                    <input type="number" id="edit-amount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                    <input type="date" id="edit-date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
+                <button onclick="saveManualEntry()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de configurações -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Configurações</h2>
+                <button onclick="closeSettings()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Taxa CDI (% a.a.)</label>
+                    <input type="number" id="cdi-rate" value="13.25" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Investimento mensal padrão (carro)</label>
+                    <input type="number" id="default-investment" value="1200" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Meta do carro</label>
+                    <input type="number" id="car-goal" value="30000" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-between">
+                <button onclick="resetAllData()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Zerar Tudo</button>
+                <div class="space-x-3">
+                    <button onclick="closeSettings()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button onclick="saveSettings()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Variáveis globais
+        let accounts = {
+            main: { balance: 0, earnings: 0, rate: 1.15 }, // 115% CDI
+            car: { balance: 0, earnings: 0, rate: 1.00, goal: 30000 }, // 100% CDI
+            card: { balance: 0, earnings: 0, rate: 1.00 } // 100% CDI
+        };
+        
+        let cdiRate = 0; // Taxa CDI anual (%)
+        let monthlyInvestment = 0; // Investimento mensal padrão para o carro (inicializado como 0)
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear any saved data
+            localStorage.removeItem('financialOrganizerData');
+            updateUI();
+        });
+        
+        // Funções para adicionar valores
+        function addToMain() {
+            const input = document.getElementById('main-input');
+            const value = parseFloat(input.value) || 0;
+            
+            if (value > 0) {
+                accounts.main.balance += value;
+                const customDate = getCustomDate('main');
+                document.getElementById('main-date-picker').classList.add('hidden');
+                updateUI();
+                saveData();
+                input.value = '';
+            }
+        }
+        
+        function addToCar() {
+            const input = document.getElementById('car-input');
+            let value = parseFloat(input.value) || monthlyInvestment;
+            
+            if (value > 0) {
+                accounts.car.balance += value;
+                const customDate = getCustomDate('car');
+                document.getElementById('car-date-picker').classList.add('hidden');
+                updateUI();
+                saveData();
+                input.value = '';
+            }
+        }
+        
+        function addToCard() {
+            const input = document.getElementById('card-input');
+            const value = parseFloat(input.value) || 0;
+            
+            if (value > 0) {
+                accounts.card.balance += value;
+                const customDate = getCustomDate('card');
+                document.getElementById('card-date-picker').classList.add('hidden');
+                updateUI();
+                saveData();
+                input.value = '';
+            }
+        }
+
+        function withdrawFromMain() {
+            const input = document.getElementById('main-input');
+            const value = parseFloat(input.value) || 0;
+            
+            if (value > 0 && value <= accounts.main.balance) {
+                accounts.main.balance -= value;
+                const customDate = getCustomDate('main');
+                document.getElementById('main-date-picker').classList.add('hidden');
+                updateUI();
+                saveData();
+                input.value = '';
+            }
+        }
+
+        function withdrawFromCar() {
+            const input = document.getElementById('car-input');
+            const value = parseFloat(input.value) || 0;
+            
+            if (value > 0 && value <= accounts.car.balance) {
+                accounts.car.balance -= value;
+                const customDate = getCustomDate('car');
+                document.getElementById('car-date-picker').classList.add('hidden');
+                updateUI();
+                saveData();
+                input.value = '';
+            }
+        }
+
+        function withdrawFromCard() {
+            const input = document.getElementById('card-input');
+            const value = parseFloat(input.value) || 0;
+            
+            if (value > 0 && value <= accounts.card.balance) {
+                accounts.card.balance -= value;
+                const customDate = getCustomDate('card');
+                document.getElementById('card-date-picker').classList.add('hidden');
+                updateUI();
+                saveData();
+                input.value = '';
+            }
+        }
+        
+        // Simular passagem de 1 mês com juros
+        function simulateMonth() {
+            // Calcular juros mensais (aproximação)
+            const monthlyRateMain = Math.pow(1 + (cdiRate * accounts.main.rate / 100), 1/12) - 1;
+            const monthlyRateCar = Math.pow(1 + (cdiRate * accounts.car.rate / 100), 1/12) - 1;
+            const monthlyRateCard = Math.pow(1 + (cdiRate * accounts.card.rate / 100), 1/12) - 1;
+            
+            // Calcular juros para cada conta
+            const earningsMain = accounts.main.balance * monthlyRateMain;
+            const earningsCar = accounts.car.balance * monthlyRateCar;
+            const earningsCard = accounts.card.balance * monthlyRateCard;
+            
+            // Adicionar juros aos saldos
+            accounts.main.balance += earningsMain;
+            accounts.main.earnings += earningsMain;
+            
+            accounts.car.balance += earningsCar;
+            accounts.car.earnings += earningsCar;
+            
+            accounts.card.balance += earningsCard;
+            accounts.card.earnings += earningsCard;
+            
+            // Adicionar investimento mensal padrão ao carro
+            accounts.car.balance += monthlyInvestment;
+            
+            updateUI();
+            saveData();
+            
+            // Feedback visual
+            const btn = document.getElementById('simulate-btn');
+            btn.classList.add('bg-green-500');
+            setTimeout(() => {
+                btn.classList.remove('bg-green-500');
+                btn.classList.add('bg-indigo-600');
+            }, 1000);
+        }
+        
+        // Atualizar interface
+        function updateUI() {
+            // Atualizar saldos
+            document.getElementById('main-amount').textContent = accounts.main.balance.toFixed(2);
+            document.getElementById('main-earnings').textContent = accounts.main.earnings.toFixed(2);
+            
+            document.getElementById('car-amount').textContent = accounts.car.balance.toFixed(2);
+            document.getElementById('car-earnings').textContent = accounts.car.earnings.toFixed(2);
+            
+            document.getElementById('card-amount').textContent = accounts.card.balance.toFixed(2);
+            document.getElementById('card-earnings').textContent = accounts.card.earnings.toFixed(2);
+            
+            // Atualizar taxas CDI
+            document.getElementById('current-cdi').textContent = cdiRate.toFixed(2);
+            document.getElementById('main-rate').textContent = (cdiRate * accounts.main.rate).toFixed(2);
+            document.getElementById('car-cdi').textContent = cdiRate.toFixed(2);
+            document.getElementById('card-cdi').textContent = cdiRate.toFixed(2);
+            document.getElementById('card-rate').textContent = (cdiRate * accounts.card.rate).toFixed(2);
+            
+            // Atualizar progresso do carro
+            const percentage = (accounts.car.balance / accounts.car.goal) * 100;
+            document.getElementById('car-percentage').textContent = Math.min(100, percentage).toFixed(1);
+            document.getElementById('car-progress').style.width = `${Math.min(100, percentage)}%`;
+            
+            // Calcular e atualizar tempo estimado
+            updateEstimatedTime();
+            
+            // Atualizar resumo
+            updateSummary();
+            
+        }
+        
+        function updateEstimatedTime() {
+            const goal = accounts.car.goal;
+            const current = accounts.car.balance;
+            const monthly = monthlyInvestment;
+            const monthlyRate = Math.pow(1 + (cdiRate * accounts.car.rate / 100), 1/12) - 1;
+            
+            if (current >= goal) {
+                document.getElementById('car-time').textContent = "Meta alcançada!";
+                return;
+            }
+            
+            // Fórmula simplificada para estimativa
+            let months = 0;
+            let simulatedBalance = current;
+            
+            while (simulatedBalance < goal && months < 600) { // Limite de 50 anos
+                simulatedBalance *= (1 + monthlyRate);
+                simulatedBalance += monthly;
+                months++;
+            }
+            
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            
+            let timeText = "";
+            if (years > 0) timeText += `${years} ano${years > 1 ? 's' : ''} `;
+            if (remainingMonths > 0) timeText += `${remainingMonths} mes${remainingMonths > 1 ? 'es' : ''}`;
+            
+            document.getElementById('car-time').textContent = timeText || "Calculando...";
+        }
+        
+        function updateSummary() {
+            const totalInvested = history
+                .filter(entry => entry.type === 'Investimento' || entry.type === 'Investimento mensal' || entry.type === 'Depósito')
+                .reduce((sum, entry) => sum + entry.amount, 0);
+                
+            const totalEarnings = accounts.main.earnings + accounts.car.earnings + accounts.card.earnings;
+            const totalAmount = accounts.main.balance + accounts.car.balance + accounts.card.balance;
+            
+            document.getElementById('monthly-investment').textContent = monthlyInvestment.toFixed(2);
+            document.getElementById('total-invested').textContent = totalInvested.toFixed(2);
+            document.getElementById('total-earnings').textContent = totalEarnings.toFixed(2);
+            document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
+        }
+        
+        
+        // Configurações
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+            document.getElementById('cdi-rate').value = cdiRate;
+            document.getElementById('default-investment').value = monthlyInvestment;
+            document.getElementById('car-goal').value = accounts.car.goal;
+        }
+        
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+        
+        function saveSettings() {
+            cdiRate = parseFloat(document.getElementById('cdi-rate').value) || 13.25;
+            monthlyInvestment = parseFloat(document.getElementById('default-investment').value) || 1200;
+            accounts.car.goal = parseFloat(document.getElementById('car-goal').value) || 30000;
+            
+            updateUI();
+            closeSettings();
+            saveData();
+        }
+        
+        // Variáveis para edição manual
+        let currentEditingAccount = '';
+        let customDates = {
+            main: null,
+            car: null,
+            card: null
+        };
+
+        function openDatePicker(account) {
+            const picker = document.getElementById(`${account}-date-picker`);
+            picker.classList.toggle('hidden');
+            
+            // Set default date to today if not already set
+            if (!customDates[account]) {
+                const dateInput = document.getElementById(`${account}-date`);
+                dateInput.valueAsDate = new Date();
+            }
+        }
+
+        function getCustomDate(account) {
+            const dateInput = document.getElementById(`${account}-date`);
+            if (dateInput.value) {
+                customDates[account] = new Date(dateInput.value);
+                return customDates[account].toLocaleDateString('pt-BR');
+            }
+            return null;
+        }
+        
+        // Funções para edição manual
+        function openEditModal(account) {
+            currentEditingAccount = account;
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-amount').value = '';
+            document.getElementById('edit-date').valueAsDate = new Date();
+        }
+        
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+        
+        function editCDI(account) {
+            const newRate = prompt(`Editar porcentagem CDI para ${account} (ex: 100 para 100% CDI):`, accounts[account].rate * 100);
+            if (newRate !== null && !isNaN(newRate)) {
+                accounts[account].rate = parseFloat(newRate) / 100;
+                updateUI();
+                saveData();
+            }
+        }
+
+        function saveManualEntry() {
+            const newAmount = parseFloat(document.getElementById('edit-amount').value) || 0;
+            const dateInput = document.getElementById('edit-date').valueAsDate;
+            
+            if (dateInput) {
+                const dateStr = dateInput.toLocaleDateString('pt-BR');
+                const oldAmount = accounts[currentEditingAccount].balance;
+                const difference = newAmount - oldAmount;
+                
+                accounts[currentEditingAccount].balance = newAmount;
+                
+                // Only add to history if there was a change
+                if (difference !== 0) {
+                }
+                
+                updateUI();
+                saveData();
+                closeEditModal();
+            }
+        }
+        
+        // Modificar função addHistory para aceitar data personalizada
+        function addHistory(account, amount, type, customDate = null) {
+            let dateStr;
+            
+            if (customDate) {
+                dateStr = customDate;
+            } else {
+                const now = new Date();
+                dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            history.push({
+                date: dateStr,
+                account: account,
+                amount: amount,
+                type: type
+            });
+        }
+
+        // Armazenamento local
+        function saveData() {
+            const data = {
+                accounts: accounts,
+                cdiRate: cdiRate,
+                monthlyInvestment: monthlyInvestment,
+            };
+            
+            localStorage.setItem('financialOrganizerData', JSON.stringify(data));
+        }
+        
+        function loadData() {
+            const savedData = localStorage.getItem('financialOrganizerData');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                
+                accounts = data.accounts || accounts;
+                cdiRate = data.cdiRate || cdiRate;
+                monthlyInvestment = data.monthlyInvestment || monthlyInvestment;
+            }
+        }
+
+        function resetAllData() {
+            if (confirm('Tem certeza que deseja zerar todos os saldos, rendimentos e histórico?')) {
+                // Reset account balances and earnings
+                accounts.main.balance = 0;
+                accounts.main.earnings = 0;
+                accounts.car.balance = 0;
+                accounts.car.earnings = 0;
+                accounts.card.balance = 0;
+                accounts.card.earnings = 0;
+                
+                
+                // Update UI and save
+                updateUI();
+                saveData();
+                closeSettings();
+                
+                alert('Todos os dados foram zerados com sucesso!');
+            }
+        }
+    </script>
+</body>
+</html>
