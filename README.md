@@ -1,1 +1,10 @@
-https://huggingface.co/spaces/Rychaarx/meu-investimento/resolve/main/README.md
+metadata
+title: investimento-organizado
+emoji: 📊
+colorFrom: red
+colorTo: purple
+sdk: static
+pinned: false
+tags:
+  - deepsite
+license: afl-3.0
